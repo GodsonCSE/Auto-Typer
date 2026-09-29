@@ -1,5 +1,7 @@
 # Universal Auto Typer
 
+URL: [**https://auto-typer-7cav.onrender.com**](https://auto-typer-7cav.onrender.com)  
+
 A beginner-friendly web app that takes any text — a sentence, a paragraph, or
 100+ lines of code — and types it back out automatically, exactly as you
 entered it. No trimming, no reformatting, no collapsed whitespace.
