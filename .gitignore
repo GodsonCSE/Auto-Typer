@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
+
+# PyInstaller build output (from build.bat) — regenerate locally instead
+# of committing built binaries.
+build/
+dist/
+*.spec

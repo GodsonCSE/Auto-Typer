@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="amber">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Auto Typer</title>
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- App styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- ── Floating Theme Switcher: compact button, swatches reveal on hover ── -->
+  <div class="theme-switcher" id="themeSwitcher" aria-label="Color theme selector">
+    <div class="theme-switcher__dots">
+      <button class="theme-dot theme-dot--amber active" onclick="setTheme('amber')" title="Amber (Default)"></button>
+      <button class="theme-dot theme-dot--emerald" onclick="setTheme('emerald')" title="Emerald Dark"></button>
+      <button class="theme-dot theme-dot--tokyo" onclick="setTheme('tokyo')" title="Tokyo Night"></button>
+      <button class="theme-dot theme-dot--red" onclick="setTheme('red')" title="Crimson Dark"></button>
+      <button class="theme-dot theme-dot--light" onclick="setTheme('light')" title="Light Mode"></button>
+    </div>
+    <button type="button" class="theme-switcher__label" title="Choose a color theme" aria-label="Choose a color theme">
+      <i class="fa-solid fa-palette"></i>
+    </button>
+  </div>
+
+  <div class="wrap">
+
+    <!-- ── Header ── -->
+    <header class="console-header">
+      <div class="prompt-line">
+        <span class="prompt-symbol">&gt;</span>
+        <h1>Universal Auto Typer<span class="cursor" id="titleCursor">_</span></h1>
+        <span class="version-badge">v2.4</span>
+      </div>
+      <p class="subtitle">Paste anything. It types back exactly what you gave it &mdash; every space, tab and blank line intact.</p>
+    </header>
+
+    <!-- ── Main card ── -->
+    <main class="console">
+
+      <!-- Mode tabs + description row -->
+      <div class="mode-header">
+        <section class="mode-switch" role="tablist" aria-label="Typing mode">
+          <button class="mode-btn active" id="modeBrowserBtn" role="tab" aria-selected="true">
+            <i class="fa-solid fa-globe"></i> Browser mode
+          </button>
+          <button class="mode-btn" id="modeLocalBtn" role="tab" aria-selected="false">
+            <i class="fa-solid fa-desktop"></i> Local system mode
+          </button>
+        </section>
+        <p class="mode-note" id="modeNote">
+          Demonstrates the typing animation right here in this tab. Works anywhere this page is open, including the deployed website.
+        </p>
+      </div>
+
+      <!-- Input textarea -->
+      <section class="field" id="inputField">
+        <div class="field-label-row">
+          <label for="inputText"><i class="fa-solid fa-code"></i> Input buffer</label>
+          <div class="field-actions">
+            <button class="link-btn" id="clearBtn" type="button"><i class="fa-solid fa-trash-can"></i> Clear</button>
+            <button class="link-btn" id="fullscreenBtn" type="button"><i class="fa-solid fa-expand"></i> Full screen</button>
+          </div>
+        </div>
+        <textarea id="inputText" spellcheck="false"
+          placeholder="Paste a sentence, a paragraph, or a hundred lines of code. Nothing will be trimmed or reformatted."></textarea>
+        <div class="meta-row">
+          <span id="charCount">Characters: 0</span>
+          <span id="lineCount">Lines: 1</span>
+          <span id="typingActiveLabel" class="typing-active-label" hidden>
+            <i class="fa-solid fa-keyboard"></i> Typing active...
+          </span>
+        </div>
+      </section>
+
+      <!-- Controls grid -->
+      <section class="controls">
+
+        <div class="control">
+          <label for="speedSelect">Typing speed</label>
+          <select id="speedSelect">
+            <option value="40" selected>Normal (40 ms)</option>
+            <option value="30">Fast (30 ms)</option>
+            <option value="20">Very fast (20 ms)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="control" id="customDelayField" hidden>
+          <label for="customDelay">Custom delay (ms)</label>
+          <input type="number" id="customDelay" min="0" max="1000" value="15">
+        </div>
+
+        <div class="control">
+          <label for="countdownInput">Countdown (seconds)</label>
+          <input type="number" id="countdownInput" min="0" max="60" value="3">
+        </div>
+
+        <div class="control">
+          <label for="repeatSelect">Repeat</label>
+          <select id="repeatSelect">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="control" id="customRepeatField" hidden>
+          <label for="customRepeat">Custom repeat count</label>
+          <input type="number" id="customRepeat" min="1" max="100" value="1">
+        </div>
+
+      </section>
+
+      <!-- Local mode notice (shown only in local mode by script.js) -->
+      <div class="local-warning" id="localWarning" hidden>
+        <div class="local-warning__body">
+          <i class="fa-solid fa-lightbulb local-warning__icon"></i>
+          <div>
+            <strong>Local system mode</strong> types into whatever application currently has keyboard focus on this computer.
+            Click into the target window before the countdown ends.
+            Press <kbd>Shift</kbd>+<kbd>X</kbd> at any time to stop instantly.
+            <label class="checkbox-row">
+              <input type="checkbox" id="dismissPopups" checked>
+              Dismiss IDE autocomplete popups before punctuation/spaces (recommended)
+            </label>
+            <div class="local-tip">Prefer not to keep this browser tab open? Build <code>UniversalAutoTyper.exe</code> with <code>build.bat</code> for a standalone desktop version of this mode &mdash; no project folder or server required.</div>
+            {% if not native_input_available %}
+            <div class="local-unavailable">This server does not have local typing available (the native Windows keyboard backend requires Windows). This is expected for a deployed/online copy &mdash; run the app locally via <code>run.bat</code> on Windows to use this mode.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <section class="actions">
+        <button class="btn btn-primary" id="startBtn" type="button" title="Start Typing — Shift + Z">
+          <i class="fa-solid fa-play"></i>
+          <span class="btn-label">Start typing</span>
+          <span class="btn-hotkey">Shift + Z</span>
+        </button>
+        <button class="btn btn-stop" id="stopBtn" type="button" disabled title="Stop Typing — Shift + X">
+          <i class="fa-solid fa-square"></i>
+          <span class="btn-label">Stop</span>
+          <span class="btn-hotkey">Shift + X</span>
+        </button>
+      </section>
+
+      <!-- Status bar + progress -->
+      <div class="status-bar">
+        <div class="status-line">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-symbol">&gt;</span>
+          <span id="statusText">Ready</span>
+        </div>
+        <div class="progress-wrap" id="progressWrap" hidden>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+      </div>
+
+      <!-- Browser mode output (script.js controls visibility) -->
+      <section class="field" id="outputField">
+        <div class="field-label-row">
+          <label><i class="fa-solid fa-terminal"></i> Output</label>
+          <button class="link-btn" id="clearOutputBtn" type="button"><i class="fa-solid fa-trash-can"></i> Clear output</button>
+        </div>
+        <pre id="outputArea" aria-live="polite"></pre>
+      </section>
+
+      <p class="disclaimer">
+        Use responsibly. Only automate applications where you have permission to do so.
+        On this page, <kbd>Shift</kbd>+<kbd>Z</kbd> starts typing and <kbd>Shift</kbd>+<kbd>X</kbd> stops it
+        immediately whenever the text box isn&rsquo;t focused. For a hotkey that works from inside any other
+        application, use the standalone <code>UniversalAutoTyper.exe</code> (see <code>build.bat</code>).
+      </p>
+
+    </main>
+
+    <footer class="console-footer">
+      Universal Auto Typer &mdash; Flask + vanilla JS, runs locally or online.
+    </footer>
+
+  </div><!-- .wrap -->
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  /* ── Theme switcher ── */
+  (function () {
+    var STORAGE_KEY = 'uat-theme';
+    var dots = document.querySelectorAll('.theme-dot');
+
+    function setTheme(name) {
+      document.documentElement.setAttribute('data-theme', name);
+      try { localStorage.setItem(STORAGE_KEY, name); } catch(e) {}
+      dots.forEach(function(d) {
+        d.classList.toggle('active', d.getAttribute('onclick').indexOf("'" + name + "'") !== -1);
+      });
+    }
+
+    /* expose globally so onclick="setTheme(...)" works */
+    window.setTheme = setTheme;
+
+    /* restore saved theme */
+    var saved;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+    if (saved) setTheme(saved);
+
+    /* ── Progress bar wiring ──
+       Hook into the existing script.js status updates via a MutationObserver
+       so we can drive the progress bar without touching script.js at all.    */
+    var progressWrap = document.getElementById('progressWrap');
+    var progressFill = document.getElementById('progressFill');
+    var progressPct  = document.getElementById('progressPct');
+    var statusDot    = document.getElementById('statusDot');
+    var typingLabel  = document.getElementById('typingActiveLabel');
+    var statusTextEl = document.getElementById('statusText');
+    var statusLine   = document.querySelector('.status-line');
+
+    function parseProgress(text) {
+      /* Matches "Typing — 123 / 456 characters" or "Typing (1 / 2) — 123 / 456 characters" */
+      var m = text.match(/(\d+)\s*\/\s*(\d+)\s+characters/);
+      if (m) return { typed: parseInt(m[1], 10), total: parseInt(m[2], 10) };
+      return null;
+    }
+
+    var observer = new MutationObserver(function() {
+      var text    = statusTextEl.textContent || '';
+      var classes = statusLine.className;
+      var isTyping  = classes.indexOf('is-typing')  !== -1;
+      var isDone    = classes.indexOf('is-done')    !== -1;
+      var isStopped = classes.indexOf('is-stopped') !== -1;
+      var isError   = classes.indexOf('is-error')   !== -1;
+
+      /* status dot colour */
+      statusDot.className = 'status-dot' +
+        (isTyping  ? ' status-dot--typing'  :
+         isDone    ? ' status-dot--done'    :
+         isStopped || isError ? ' status-dot--error' : '');
+
+      /* typing active label */
+      if (typingLabel) typingLabel.hidden = !isTyping;
+
+      /* progress bar */
+      var p = isTyping ? parseProgress(text) : null;
+      if (p && p.total > 0) {
+        progressWrap.hidden = false;
+        var pct = Math.round((p.typed / p.total) * 100);
+        progressFill.style.width = pct + '%';
+        progressPct.textContent  = pct + '%';
+      } else if (isDone) {
+        progressFill.style.width = '100%';
+        progressPct.textContent  = '100%';
+        setTimeout(function() { progressWrap.hidden = true; progressFill.style.width = '0%'; }, 2000);
+      } else if (isStopped || isError) {
+        setTimeout(function() { progressWrap.hidden = true; progressFill.style.width = '0%'; }, 1500);
+      } else if (!isTyping) {
+        progressWrap.hidden = true;
+      }
+    });
+
+    observer.observe(document.getElementById('statusText'), { childList: true, characterData: true, subtree: true });
+    observer.observe(document.querySelector('.status-line'), { attributes: true, attributeFilter: ['class'] });
+  })();
+</script>
+</body>
+</html>
